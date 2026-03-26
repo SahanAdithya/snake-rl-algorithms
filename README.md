@@ -17,14 +17,21 @@ This project combines Reinforcement Learning (DQN) with classical Graph Algorith
 
 ## How to Run
 
+For convenience, I have provided a **launcher script** that automatically uses the project's virtual environment.
+
 1.  **Install dependencies**:
     ```bash
     pip install -r requirements.txt
     ```
 
-2.  **Start Training**:
+2.  **Start Training (with live plotting)**:
     ```bash
-    python3 src/trainer.py
+    python3 run.py train
+    ```
+
+3.  **Watch the Trained Agent (Inference)**:
+    ```bash
+    python3 run.py test
     ```
 
 ## Performance Comparison
