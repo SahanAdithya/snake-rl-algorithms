@@ -1,6 +1,12 @@
 import torch
 import numpy as np
 import random
+import sys
+import os
+
+# Add the project root to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from env.snake_game import SnakeGame, BLOCK_SIZE, Direction, Point
 from env.wrapper import SnakeGameAIWrapper
 from src.agent import Agent
@@ -15,6 +21,7 @@ def train():
     game = SnakeGame()
     wrapper = SnakeGameAIWrapper(game)
 
+    print("Starting training...")
     while True:
         # get old state
         state_old = wrapper.get_state()
@@ -29,29 +36,24 @@ def train():
         
         path = a_star(head, food, game.w, game.h, BLOCK_SIZE, body)
         
-        # Determine the "best" move based on A*
-        a_star_bonus = 0
-        if path:
-            next_step = path[0]
-            # Convert final_move to the coordinate change it produces
-            # and check if it matches next_step
-            # For simplicity, we can just check if the action leads to the next_step
-            pass # We will apply bonuses in the step logic below
-
         # perform move and get new state
-        state_new, reward, done, score = wrapper.step(final_move)
+        # In our refined wrapper, step returns (obs, reward, terminated, truncated, info)
+        state_new, reward, done, _, info = wrapper.step(final_move)
+        score = info["score"]
         
-        # --- REWARD SHAPING ---
-        # 1. A* Bonus: reward for moving towards food
+        # --- REWARD SHAPING (The Algorithmic Twist) ---
+        # 1. A* Bonus: reward for moving towards food along the optimal path
         if path and len(path) > 0:
             new_head = (game.head.x, game.head.y)
             if new_head == path[0]:
-                reward += 1 # Bonus for following A* path
+                reward += 1.0 # Bonus for following A* guidance
+            else:
+                reward -= 0.5 # Slight penalty for deviating from optimal path
         
-        # 2. DFS Penalty: penalty for entering a dead end
+        # 2. DFS Survival Check: penalty for entering a dead end
         new_body = [(p.x, p.y) for p in game.snake]
         if is_dead_end((game.head.x, game.head.y), game.w, game.h, BLOCK_SIZE, new_body):
-            reward -= 5 # Heavy penalty for dead ends
+            reward -= 5.0 # Pre-emptive penalty for trapping itself
         
         # train short memory
         agent.train_short_memory(state_old, final_move, reward, state_new, done)
@@ -69,13 +71,12 @@ def train():
                 record = score
                 agent.model.save()
 
-            print('Game', agent.n_games, 'Score', score, 'Record:', record)
+            print(f'Episode: {agent.n_games} | Score: {score} | Record: {record} | Reward: {reward:.2f}')
 
             plot_scores.append(score)
             total_score += score
             mean_score = total_score / agent.n_games
             plot_mean_scores.append(mean_score)
-            # You could add plotting here using matplotlib if desired
 
 if __name__ == '__main__':
     train()
