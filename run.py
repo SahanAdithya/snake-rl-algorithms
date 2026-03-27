@@ -26,5 +26,7 @@ if __name__ == "__main__":
         run_command(["src/trainer.py"])
     elif mode == "test":
         run_command(["src/test_agent.py"])
+    elif mode == "optimize":
+        run_command(["src/optimize.py"])
     else:
         print(f"Unknown mode: {mode}. Use 'train' or 'test'.")

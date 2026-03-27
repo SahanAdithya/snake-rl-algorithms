@@ -3,3 +3,6 @@ numpy
 torch
 matplotlib
 gymnasium
+wandb
+optuna
+ipython
